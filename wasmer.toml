@@ -1,1 +1,49 @@
+[package]
+name = "bangla-judge/codex-compiler"
+version = "1.0.0"
+description = "একটি সম্পূর্ণ বাংলা ভাষায় তৈরি অনলাইন জাজ সিস্টেম"
+license = "MIT"
 
+[wasmer]
+is_wasmer = true
+
+[command]
+name = "codex-compiler"
+module = "main:app/main.py"
+runner = "python"
+
+[[endpoint]]
+path = "/"
+method = "GET"
+
+[[endpoint]]
+path = "/execute"
+method = "POST"
+
+[[endpoint]]
+path = "/submit"
+method = "POST"
+
+[[endpoint]]
+path = "/submission/{id}"
+method = "GET"
+
+[[endpoint]]
+path = "/languages"
+method = "GET"
+
+[[endpoint]]
+path = "/stats"
+method = "GET"
+
+[[endpoint]]
+path = "/health"
+method = "GET"
+
+[env]
+WASMER_ENV = "production"
+PYTHONUNBUFFERED = "1"
+
+[limits]
+timeout = "30s"
+memory = "256MB"
