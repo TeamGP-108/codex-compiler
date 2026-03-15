@@ -1,1 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>বাংলা জাজ - অনলাইন কোড কম্পাইলার</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .editor-container {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        select, input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            color: #388e3c;
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇧🇩 বাংলা জাজ - অনলাইন কোড কম্পাইলার</h1>
+        
+        <div class="editor-container">
+            <textarea id="code" placeholder="এখানে আপনার কোড লিখুন...">print("স্বাগতম বাংলা জাজে!")
+print(2 + 2)</textarea>
+        </div>
+        
+        <div class="controls">
+            <select id="language">
+                <option value="python">পাইথন (Python)</option>
+                <option value="javascript">জাভাস্ক্রিপ্ট (JavaScript)</option>
+                <option value="java">জাভা (Java)</option>
+                <option value="cpp">সি++ (C++)</option>
+                <option value="c">সি (C)</option>
+                <option value="ruby">রুবি (Ruby)</option>
+                <option value="php">পিএইচপি (PHP)</option>
+                <option value="bash">ব্যাশ (Bash)</option>
+            </select>
+            
+            <input type="text" id="stdin" placeholder="ইনপুট (যদি থাকে)" style="flex: 1;">
+            
+            <button onclick="executeCode()">⚡ রান কোড</button>
+            <button onclick="clearOutput()">🗑️ ক্লিয়ার</button>
+        </div>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div class="output" id="output">
+            <div style="color: #666;">আউটপুট দেখাবে এখানে...</div>
+        </div>
+    </div>
 
+    <script>
+        async function executeCode() {
+            const code = document.getElementById('code').value;
+            const language = document.getElementById('language').value;
+            const stdin = document.getElementById('stdin').value;
+            
+            if (!code.trim()) {
+                alert('দয়া করে কিছু কোড লিখুন!');
+                return;
+            }
+            
+            // লোডার দেখান
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('output').innerHTML = '⏳ প্রসেসিং...';
+            
+            try {
+                const response = await fetch('/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: language,
+                        stdin: stdin,
+                        time_limit: 5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'completed') {
+                    const result = data.result;
+                    let outputHtml = '';
+                    
+                    if (result.stdout) {
+                        outputHtml += `<div class="success"><strong>আউটপুট:</strong><br><pre>${escapeHtml(result.stdout)}</pre></div>`;
+                    }
+                    
+                    if (result.stderr) {
+                        outputHtml += `<div class="error"><strong>এরর:</strong><br><pre>${escapeHtml(result.stderr)}</pre></div>`;
+                    }
+                    
+                    if (result.error) {
+                        outputHtml += `<div class="error"><strong>সিস্টেম এরর:</strong><br>${escapeHtml(result.error)}</div>`;
+                    }
+                    
+                    if (!result.stdout && !result.stderr && !result.error) {
+                        outputHtml = '<div style="color: #999;">কোনো আউটপুট নেই</div>';
+                    }
+                    
+                    outputHtml += `<div style="margin-top: 10px; color: #666; font-size: 0.9em;">⏱️ এক্সিকিউশন টাইম: ${result.execution_time.toFixed(3)} সেকেন্ড</div>`;
+                    
+                    document.getElementById('output').innerHTML = outputHtml;
+                } else {
+                    document.getElementById('output').innerHTML = `<div class="error">এরর: ${data.result?.error || 'অজানা ত্রুটি'}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('output').innerHTML = `<div class="error">নেটওয়ার্ক এরর: ${error.message}</div>`;
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+        
+        function clearOutput() {
+            document.getElementById('code').value = '';
+            document.getElementById('stdin').value = '';
+            document.getElementById('output').innerHTML = '<div style="color: #666;">আউটপুট দেখাবে এখানে...</div>';
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
