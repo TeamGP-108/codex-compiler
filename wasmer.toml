@@ -9,7 +9,7 @@ is_wasmer = true
 
 [command]
 name = "codex-compiler"
-module = "main:app/main.py"
+module = "app.main:app"
 runner = "python"
 
 [[endpoint]]
@@ -43,6 +43,7 @@ method = "GET"
 [env]
 WASMER_ENV = "production"
 PYTHONUNBUFFERED = "1"
+PYTHON_VERSION = "3.12"  # Python 3.12 এ ডাউনগ্রেড
 
 [limits]
 timeout = "30s"
